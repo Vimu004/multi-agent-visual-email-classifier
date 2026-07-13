@@ -1,0 +1,8 @@
+[
+  {
+    "id": "BILL-001",
+    "title": "Refund workflow",
+    "content": "Refunds over $100 require finance approval and must be logged in the billing ledger.",
+    "requires_human_approval": true
+  }
+]

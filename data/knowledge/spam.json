@@ -1,0 +1,8 @@
+[
+  {
+    "id": "SPAM-001",
+    "title": "Suspicious giveaways",
+    "content": "Do not engage with unsolicited prize or lottery messages. Recommend spam filtering.",
+    "requires_human_approval": false
+  }
+]

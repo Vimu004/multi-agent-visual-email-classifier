@@ -1,0 +1,9 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.env
+.venv/
+email_agents.db
+test_email_agents.db
+.DS_Store

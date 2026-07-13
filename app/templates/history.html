@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workflow History — Multi-Agent Email Assistant</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body data-page="history">
+
+<nav class="top-nav">
+    <div class="nav-content">
+        <div class="logo">
+            <i data-lucide="mail"></i>
+            <span>EmailAgent.AI</span>
+        </div>
+        <div class="nav-links">
+            <a href="/">Dashboard</a>
+            <a href="/history" class="active">History</a>
+            <a href="/architecture">Architecture</a>
+        </div>
+        <div class="provider-pill">
+            <i data-lucide="cpu"></i>
+            <span>{{ ui_status.provider_label }}</span>
+        </div>
+    </div>
+</nav>
+
+<main class="history-layout">
+    <header class="page-header">
+        <h1><i data-lucide="clock"></i> Run History</h1>
+        <p>Review past LangGraph executions, routing decisions, and approval outcomes.</p>
+    </header>
+
+    <section class="panel glass full-width-panel">
+        <div class="table-responsive">
+            <table class="modern-table" id="history-table">
+                <thead>
+                    <tr>
+                        <th><i data-lucide="hash"></i> ID</th>
+                        <th><i data-lucide="type"></i> Subject</th>
+                        <th><i data-lucide="tag"></i> Category</th>
+                        <th><i data-lucide="activity"></i> Status</th>
+                        <th><i data-lucide="calendar"></i> Date</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Populated by app.js -->
+                </tbody>
+            </table>
+        </div>
+    </section>
+</main>
+<script src="/static/app.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if(window.lucide) lucide.createIcons();
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,8 @@
+[
+  {
+    "id": "GEN-001",
+    "title": "Support hours",
+    "content": "Weekend support runs 9am-5pm local time with reduced staffing.",
+    "requires_human_approval": false
+  }
+]

@@ -1,0 +1,8 @@
+[
+  {
+    "id": "TECH-001",
+    "title": "Crash diagnostics",
+    "content": "Collect logs, timestamp, and reproduction steps before suggesting configuration changes.",
+    "requires_human_approval": false
+  }
+]

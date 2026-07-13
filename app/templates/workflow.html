@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Workflow {{ workflow_id }} — Email Assistant</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body data-page="workflow" data-workflow-id="{{ workflow_id }}">
+
+<nav class="top-nav">
+    <div class="nav-content">
+        <div class="logo">
+            <i data-lucide="mail"></i>
+            <span>EmailAgent.AI</span>
+        </div>
+        <div class="nav-links">
+            <a href="/">Dashboard</a>
+            <a href="/history">History</a>
+            <a href="/architecture">Architecture</a>
+        </div>
+        <div class="provider-pill">
+            <i data-lucide="cpu"></i>
+            <span>{{ ui_status.provider_label }}</span>
+        </div>
+    </div>
+</nav>
+
+<main class="workflow-detail-layout">
+    <header class="page-header">
+        <div class="header-breadcrumbs">
+            <a href="/history"><i data-lucide="arrow-left"></i> Back to History</a>
+        </div>
+        <h1>Workflow Run</h1>
+        <p class="font-mono text-muted">{{ workflow_id }}</p>
+    </header>
+
+    <div class="workflow-split">
+        <!-- Main Data -->
+        <div class="workflow-main">
+            <section class="panel glass" id="workflow-detail">
+                <!-- Populated by app.js -->
+            </section>
+        </div>
+
+        <!-- Trace Sidebar -->
+        <aside class="workflow-sidebar">
+            <section class="panel glass" id="workflow-trace">
+                <!-- Populated by app.js -->
+            </section>
+        </aside>
+    </div>
+</main>
+<script src="/static/app.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if(window.lucide) lucide.createIcons();
+    });
+</script>
+</body>
+</html>

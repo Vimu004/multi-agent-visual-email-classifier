@@ -1,0 +1,8 @@
+[
+  {
+    "id": "ACCOUNT-001",
+    "title": "Changing a registered phone number",
+    "content": "A registered phone number must not be changed automatically. Identity verification is required.",
+    "requires_human_approval": true
+  }
+]

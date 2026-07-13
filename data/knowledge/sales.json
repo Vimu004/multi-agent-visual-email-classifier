@@ -1,0 +1,8 @@
+[
+  {
+    "id": "SALES-001",
+    "title": "Enterprise pricing guidance",
+    "content": "Always confirm seat counts, contract length, and procurement contact before sending pricing.",
+    "requires_human_approval": false
+  }
+]

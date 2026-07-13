@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard — Multi-Agent Email Assistant</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body data-page="dashboard">
+
+<nav class="top-nav">
+    <div class="nav-content">
+        <div class="logo">
+            <i data-lucide="mail"></i>
+            <span>EmailAgent.AI</span>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="active">Dashboard</a>
+            <a href="/history">History</a>
+            <a href="/architecture">Architecture</a>
+        </div>
+        <div class="provider-pill">
+            <i data-lucide="cpu"></i>
+            <span>{{ ui_status.provider_label }}</span>
+        </div>
+    </div>
+</nav>
+
+<main class="dashboard-layout">
+    <!-- Left Column: Input -->
+    <aside class="left-pane">
+        <section class="panel glass">
+            <div class="panel-header">
+                <h2><i data-lucide="inbox"></i> Email Intake</h2>
+            </div>
+            <div class="sample-chips">
+                <button data-sample="sales" class="chip">Sales</button>
+                <button data-sample="technical" class="chip">Technical</button>
+                <button data-sample="billing" class="chip">Billing</button>
+                <button data-sample="account" class="chip">Account</button>
+                <button data-sample="spam" class="chip">Spam</button>
+                <button data-sample="general" class="chip">General</button>
+            </div>
+            <form id="email-form">
+                <label>Sender <input type="email" name="sender" required placeholder="customer@example.com" /></label>
+                <label>Subject <input type="text" name="subject" required placeholder="Email subject..." /></label>
+                <label>Body <textarea name="body" rows="8" required placeholder="Type the email content here..."></textarea></label>
+                <button type="submit" class="primary full-width">
+                    <i data-lucide="zap"></i> Analyze & Route
+                </button>
+            </form>
+        </section>
+        
+        <section class="panel glass mini-history">
+            <div class="panel-header">
+                <h2><i data-lucide="history"></i> Recent Runs</h2>
+            </div>
+            <div id="history-list" class="mini-history-list"></div>
+        </section>
+    </aside>
+
+    <!-- Center Column: Workflow Progress & Results -->
+    <div class="center-pane">
+        <section class="panel glass workflow-header-panel">
+            <div class="workflow-header-top">
+                <h2><i data-lucide="workflow"></i> Workflow Progress</h2>
+                <div id="run-status" class="run-status" hidden></div>
+            </div>
+            <div class="workflow-stepper" id="workflow-grid">
+                <div class="node" data-node="intake"><span class="node-index">1</span>Intake</div>
+                <div class="node" data-node="classify"><span class="node-index">2</span>Classify</div>
+                <div class="node" data-node="supervisor"><span class="node-index">3</span>Supervisor</div>
+                <div class="node" data-node="specialist"><span class="node-index">4</span>Specialist</div>
+                <div class="node" data-node="response"><span class="node-index">5</span>Draft</div>
+                <div class="node" data-node="review"><span class="node-index">6</span>Review</div>
+                <div class="node" data-node="approval"><span class="node-index">7</span>Approval</div>
+                <div class="node" data-node="final"><span class="node-index">8</span>Final</div>
+            </div>
+        </section>
+
+        <!-- Dynamic Approval Overlay Panel -->
+        <section class="panel glass attention-panel" id="approval-panel" hidden>
+            <div class="attention-header">
+                <div class="pulse-icon"><i data-lucide="alert-circle"></i></div>
+                <div>
+                    <h2>Human Approval Required</h2>
+                    <p id="approval-reason"></p>
+                </div>
+            </div>
+            <textarea id="approval-draft" rows="6"></textarea>
+            <div class="actions">
+                <button id="approve-btn" class="primary"><i data-lucide="check"></i> Approve & Send</button>
+                <button id="reject-btn" class="danger"><i data-lucide="x"></i> Reject</button>
+            </div>
+        </section>
+
+        <section class="bento-grid" id="result-grid">
+            <article class="bento-card" id="classification-card">
+                <div class="bento-header">
+                    <i data-lucide="tag"></i>
+                    <h3>Classification</h3>
+                </div>
+                <pre class="card-body" data-content="classification">Awaiting input…</pre>
+            </article>
+            <article class="bento-card" id="supervisor-card">
+                <div class="bento-header">
+                    <i data-lucide="git-branch"></i>
+                    <h3>Supervisor Routing</h3>
+                </div>
+                <pre class="card-body" data-content="supervisor">---</pre>
+            </article>
+            <article class="bento-card span-2" id="specialist-card">
+                <div class="bento-header">
+                    <i data-lucide="bot"></i>
+                    <h3>Specialist Analysis</h3>
+                </div>
+                <pre class="card-body" data-content="specialist">---</pre>
+            </article>
+            <article class="bento-card span-2" id="draft-card">
+                <div class="bento-header">
+                    <i data-lucide="pen-tool"></i>
+                    <h3>Draft Response</h3>
+                </div>
+                <pre class="card-body" data-content="draft">---</pre>
+            </article>
+            <article class="bento-card" id="review-card">
+                <div class="bento-header">
+                    <i data-lucide="shield-check"></i>
+                    <h3>Reviewer Decision</h3>
+                </div>
+                <pre class="card-body" data-content="review">---</pre>
+            </article>
+            <article class="bento-card" id="approval-card">
+                <div class="bento-header">
+                    <i data-lucide="activity"></i>
+                    <h3>Final Status</h3>
+                </div>
+                <div id="approval-status" class="status-badge large">---</div>
+            </article>
+        </section>
+    </div>
+
+    <!-- Right Column: Observability / Trace -->
+    <aside class="right-pane">
+        <section class="panel glass sticky-panel" id="trace-panel">
+            <div class="panel-header">
+                <h2><i data-lucide="list-tree"></i> Live Trace</h2>
+            </div>
+            <div id="trace-list" class="trace-feed"></div>
+        </section>
+    </aside>
+</main>
+<script src="/static/app.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if(window.lucide) lucide.createIcons();
+    });
+</script>
+</body>
+</html>
