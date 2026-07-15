@@ -12,3 +12,6 @@ test_email_agents.db
 
 email_agents.db-shm
 email_agents.db-wal
+
+test_email_agents.db-shm
+test_email_agents.db-wal
