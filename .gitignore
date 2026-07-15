@@ -7,3 +7,8 @@ __pycache__/
 email_agents.db
 test_email_agents.db
 .DS_Store
+
+.vscode/
+
+email_agents.db-shm
+email_agents.db-wal

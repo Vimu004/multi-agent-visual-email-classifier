@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -8,40 +9,41 @@
     <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js" defer></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
+
 <body data-page="architecture">
 
-<nav class="top-nav">
-    <div class="nav-content">
-        <div class="logo">
-            <i data-lucide="mail"></i>
-            <span>EmailAgent.AI</span>
-        </div>
-        <div class="nav-links">
-            <a href="/">Dashboard</a>
-            <a href="/history">History</a>
-            <a href="/architecture" class="active">Architecture</a>
-        </div>
-        <div class="provider-pill">
-            <i data-lucide="cpu"></i>
-            <span>{{ ui_status.provider_label }}</span>
-        </div>
-    </div>
-</nav>
-
-<main class="architecture-layout">
-    <header class="page-header">
-        <h1>System Architecture</h1>
-        <p>Supervisor-led LangGraph workflow with human-in-the-loop pauses.</p>
-    </header>
-
-    <div class="arch-content">
-        <!-- Main Diagram -->
-        <section class="panel glass feature-panel diagram-panel">
-            <div class="panel-header">
-                <h2><i data-lucide="network"></i> Workflow Topology</h2>
+    <nav class="top-nav">
+        <div class="nav-content">
+            <div class="logo">
+                <i data-lucide="mail"></i>
+                <span>EmailAgent.AI</span>
             </div>
-            <div class="mermaid-container">
-                <pre class="mermaid">
+            <div class="nav-links">
+                <a href="/">Dashboard</a>
+                <a href="/history">History</a>
+                <a href="/architecture" class="active">Architecture</a>
+            </div>
+            <div class="provider-pill">
+                <i data-lucide="cpu"></i>
+                <span>{{ ui_status.provider_label }}</span>
+            </div>
+        </div>
+    </nav>
+
+    <main class="architecture-layout">
+        <header class="page-header">
+            <h1>System Architecture</h1>
+            <p>Supervisor-led LangGraph workflow with human-in-the-loop pauses.</p>
+        </header>
+
+        <div class="arch-content">
+            <!-- Main Diagram -->
+            <section class="panel glass feature-panel diagram-panel">
+                <div class="panel-header">
+                    <h2><i data-lucide="network"></i> Workflow Topology</h2>
+                </div>
+                <div class="mermaid-container">
+                    <pre class="mermaid">
 flowchart TD
     UI[Browser Dashboard]
     API[FastAPI API]
@@ -103,88 +105,101 @@ flowchart TD
 
     API --> DB
     API --> Trace
+
+
+    
                 </pre>
+                </div>
+            </section>
+
+            <!-- Explainers -->
+            <div class="arch-side">
+                <section class="panel glass">
+                    <div class="panel-header">
+                        <h2><i data-lucide="info"></i> Request Journey</h2>
+                    </div>
+                    <ol class="journey-list">
+                        <li>User submits the account-access email.</li>
+                        <li>Classification Agent identifies <strong>account_access</strong>.</li>
+                        <li>Supervisor selects the Account Access Agent.</li>
+                        <li>Specialist reads the local account policy JSON.</li>
+                        <li>Response Agent drafts a secure reply.</li>
+                        <li>Reviewer flags the identity change as sensitive.</li>
+                        <li>Workflow pauses and persists in SQLite.</li>
+                        <li>Human approves via the dashboard.</li>
+                        <li>Final response is stored and shown.</li>
+                    </ol>
+                </section>
+
+                <section class="panel glass">
+                    <div class="panel-header">
+                        <h2><i data-lucide="shield-alert"></i> Human-in-the-loop</h2>
+                    </div>
+                    <p class="text-sm">The LangGraph approval gate pauses execution when classifier confidence is low,
+                        when specialists raise a high-risk flag, or when the reviewer requests human input. The current
+                        state and trace are stored in SQLite so the presenter can resume or reject from the dashboard.
+                        Account changes, refunds, deletions, and any schema validation issues always require approval.
+                    </p>
+                </section>
             </div>
-        </section>
-
-        <!-- Explainers -->
-        <div class="arch-side">
-            <section class="panel glass">
-                <div class="panel-header">
-                    <h2><i data-lucide="info"></i> Request Journey</h2>
-                </div>
-                <ol class="journey-list">
-                    <li>User submits the account-access email.</li>
-                    <li>Classification Agent identifies <strong>account_access</strong>.</li>
-                    <li>Supervisor selects the Account Access Agent.</li>
-                    <li>Specialist reads the local account policy JSON.</li>
-                    <li>Response Agent drafts a secure reply.</li>
-                    <li>Reviewer flags the identity change as sensitive.</li>
-                    <li>Workflow pauses and persists in SQLite.</li>
-                    <li>Human approves via the dashboard.</li>
-                    <li>Final response is stored and shown.</li>
-                </ol>
-            </section>
-            
-            <section class="panel glass">
-                <div class="panel-header">
-                    <h2><i data-lucide="shield-alert"></i> Human-in-the-loop</h2>
-                </div>
-                <p class="text-sm">The LangGraph approval gate pauses execution when classifier confidence is low, when specialists raise a high-risk flag, or when the reviewer requests human input. The current state and trace are stored in SQLite so the presenter can resume or reject from the dashboard. Account changes, refunds, deletions, and any schema validation issues always require approval.</p>
-            </section>
         </div>
-    </div>
 
-    <!-- Agent Roster Grid -->
-    <section class="panel glass">
-        <div class="panel-header">
-            <h2><i data-lucide="users"></i> Agent Roster</h2>
-            <p class="text-sm text-muted">Complete breakdown of all LangGraph nodes in the system.</p>
-        </div>
-        <div class="bento-grid agent-grid" id="agent-cards">
-            {% for agent in [
-                {"name":"Classification Agent","input":"Raw email","output":"category, confidence, priority","llm":True,"final":False},
-                {"name":"Supervisor Agent","input":"classification","output":"specialist selection","llm":True,"final":False},
+        <!-- Agent Roster Grid -->
+        <section class="panel glass">
+            <div class="panel-header">
+                <h2><i data-lucide="users"></i> Agent Roster</h2>
+                <p class="text-sm text-muted">Complete breakdown of all LangGraph nodes in the system.</p>
+            </div>
+            <div class="bento-grid agent-grid" id="agent-cards">
+                {% for agent in [
+                {"name":"Classification Agent","input":"Raw email","output":"category, confidence,
+                priority","llm":True,"final":False},
+                {"name":"Supervisor Agent","input":"classification","output":"specialist
+                selection","llm":True,"final":False},
                 {"name":"Spam Agent","input":"spam emails + policy","output":"risk guidance","llm":True,"final":False},
                 {"name":"Sales Agent","input":"sales questions","output":"sales analysis","llm":True,"final":False},
-                {"name":"Technical Support Agent","input":"error details","output":"tech diagnosis","llm":True,"final":False},
-                {"name":"Billing Support Agent","input":"billing disputes","output":"billing guidance","llm":True,"final":False},
-                {"name":"Account Access Agent","input":"account recovery","output":"identity steps","llm":True,"final":False},
+                {"name":"Technical Support Agent","input":"error details","output":"tech
+                diagnosis","llm":True,"final":False},
+                {"name":"Billing Support Agent","input":"billing disputes","output":"billing
+                guidance","llm":True,"final":False},
+                {"name":"Account Access Agent","input":"account recovery","output":"identity
+                steps","llm":True,"final":False},
                 {"name":"General Agent","input":"simple questions","output":"quick answers","llm":True,"final":False},
                 {"name":"Response Agent","input":"email + analysis","output":"draft reply","llm":True,"final":False},
                 {"name":"Reviewer Agent","input":"draft + policy","output":"decision","llm":True,"final":False},
                 {"name":"Human Approval","input":"paused workflow","output":"approve/reject","llm":False,"final":True}
-            ] %}
-            <article class="agent-card bento-card">
-                <div class="agent-header">
-                    <h3>{{ agent.name }}</h3>
-                    {% if agent.llm %}
+                ] %}
+                <article class="agent-card bento-card">
+                    <div class="agent-header">
+                        <h3>{{ agent.name }}</h3>
+                        {% if agent.llm %}
                         <span class="badge badge-primary"><i data-lucide="brain"></i> LLM</span>
-                    {% else %}
+                        {% else %}
                         <span class="badge badge-secondary"><i data-lucide="cpu"></i> Rule</span>
-                    {% endif %}
-                </div>
-                <div class="agent-meta">
-                    <div class="meta-row">
-                        <span class="meta-label">Input</span>
-                        <span class="meta-val">{{ agent.input }}</span>
+                        {% endif %}
                     </div>
-                    <div class="meta-row">
-                        <span class="meta-label">Output</span>
-                        <span class="meta-val">{{ agent.output }}</span>
+                    <div class="agent-meta">
+                        <div class="meta-row">
+                            <span class="meta-label">Input</span>
+                            <span class="meta-val">{{ agent.input }}</span>
+                        </div>
+                        <div class="meta-row">
+                            <span class="meta-label">Output</span>
+                            <span class="meta-val">{{ agent.output }}</span>
+                        </div>
                     </div>
-                </div>
-            </article>
-            {% endfor %}
-        </div>
-    </section>
+                </article>
+                {% endfor %}
+            </div>
+        </section>
 
-</main>
-<script src="/static/app.js" defer></script>
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        if(window.lucide) lucide.createIcons();
-    });
-</script>
+    </main>
+    <script src="/static/app.js" defer></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (window.lucide) lucide.createIcons();
+        });
+    </script>
 </body>
+
 </html>
