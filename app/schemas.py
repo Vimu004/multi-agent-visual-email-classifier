@@ -9,6 +9,7 @@ class EmailSubmission(BaseModel):
     sender: str
     subject: str
     body: str
+    mode: Literal["agentic", "multi_agentic"] = "multi_agentic"
 
 
 class DraftResponse(BaseModel):
@@ -39,6 +40,18 @@ class SpecialistAnalysis(BaseModel):
     specialist: str
     analysis: str
     recommended_action: str
+    action: Literal[
+        "approve_refund",
+        "deny_refund",
+        "escalate",
+        "create_ticket",
+        "kb_link",
+        "verify_then_update",
+        "send_pricing",
+        "route_to_human",
+        "no_action",
+    ] = "no_action"
+    action_detail: str | None = None
     information_needed: list[str] = Field(default_factory=list)
     risk: Literal["low", "medium", "high"]
     requires_human_review: bool = False
@@ -79,6 +92,7 @@ class WorkflowSummary(BaseModel):
     subject: str
     category: Optional[str]
     status: str
+    mode: str
     requires_human_approval: bool
     updated_at: datetime
 
@@ -102,6 +116,7 @@ class WorkflowDetail(BaseModel):
     category: Optional[str]
     selected_specialist: Optional[str]
     status: str
+    mode: str
     requires_human_approval: bool
     approval_reason: Optional[str]
     human_decision: Optional[str]

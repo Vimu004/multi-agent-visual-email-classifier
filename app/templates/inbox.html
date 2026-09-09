@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Inbox — Multi-Agent Email Assistant</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body data-page="inbox">
+
+<nav class="top-nav">
+    <div class="nav-content">
+        <div class="logo">
+            <i data-lucide="mail"></i>
+            <span>EmailAgent.AI</span>
+        </div>
+        <div class="nav-links">
+            <a href="/" class="active">Inbox</a>
+            <a href="/history">History</a>
+            <a href="/architecture">Architecture</a>
+        </div>
+        <div class="provider-pill">
+            <i data-lucide="cpu"></i>
+            <span>{{ ui_status.provider_label }}</span>
+        </div>
+    </div>
+</nav>
+
+<main class="dashboard-layout inbox-layout">
+    <!-- Left: mode switch + inbox list -->
+    <aside class="left-pane">
+        <section class="panel glass mode-switch-panel">
+            <div class="panel-header">
+                <h2><i data-lucide="split"></i> Mode</h2>
+            </div>
+            <div class="mode-toggle" id="mode-toggle" role="tablist">
+                <button class="mode-btn active" data-mode="agentic" role="tab">
+                    <i data-lucide="bot"></i>
+                    <span>Agentic</span>
+                    <small>classify &rarr; forward</small>
+                </button>
+                <button class="mode-btn" data-mode="multi_agentic" role="tab">
+                    <i data-lucide="network"></i>
+                    <span>Multi-Agentic</span>
+                    <small>supervisor &rarr; department &rarr; decision &rarr; review</small>
+                </button>
+            </div>
+        </section>
+
+        <section class="panel glass inbox-list-panel">
+            <div class="panel-header">
+                <h2><i data-lucide="inbox"></i> Inbox</h2>
+                <button id="compose-btn" class="chip compose-chip"><i data-lucide="pencil"></i> Compose</button>
+            </div>
+            <div id="inbox-list" class="inbox-list"></div>
+        </section>
+    </aside>
+
+    <!-- Center: reading pane + results -->
+    <div class="center-pane">
+        <section class="panel glass reading-pane" id="reading-pane">
+            <div class="reading-empty" id="reading-empty">
+                <i data-lucide="mail-open"></i>
+                <p>Select an email from the inbox to run it through the pipeline.</p>
+            </div>
+            <div class="reading-content" id="reading-content" hidden>
+                <div class="reading-header">
+                    <div>
+                        <h2 id="reading-subject"></h2>
+                        <p class="text-muted" id="reading-sender"></p>
+                    </div>
+                    <button id="run-btn" class="primary"><i data-lucide="play"></i> Run</button>
+                </div>
+                <p id="reading-body" class="reading-body"></p>
+                <div id="run-status" class="run-status" hidden></div>
+            </div>
+        </section>
+
+        <section class="panel glass flow-panel">
+            <div class="panel-header">
+                <h2><i data-lucide="workflow"></i> Pipeline</h2>
+            </div>
+            <div class="workflow-stepper" id="workflow-grid"></div>
+        </section>
+
+        <section class="panel glass attention-panel" id="approval-panel" hidden>
+            <div class="attention-header">
+                <div class="pulse-icon"><i data-lucide="alert-circle"></i></div>
+                <div>
+                    <h2>Human Approval Required</h2>
+                    <p id="approval-reason"></p>
+                </div>
+            </div>
+            <textarea id="approval-draft" rows="6"></textarea>
+            <div class="actions">
+                <button id="approve-btn" class="primary"><i data-lucide="check"></i> Approve &amp; Send</button>
+                <button id="reject-btn" class="danger"><i data-lucide="x"></i> Reject</button>
+            </div>
+        </section>
+
+        <section class="bento-grid" id="result-grid">
+            <article class="bento-card" id="classification-card">
+                <div class="bento-header"><i data-lucide="tag"></i><h3>Classification</h3></div>
+                <pre class="card-body" data-content="classification">Awaiting input…</pre>
+            </article>
+            <article class="bento-card" id="route-card">
+                <div class="bento-header"><i data-lucide="git-branch"></i><h3>Routing / Supervisor</h3></div>
+                <pre class="card-body" data-content="supervisor">---</pre>
+            </article>
+            <article class="bento-card span-2" id="decision-card">
+                <div class="bento-header"><i data-lucide="bot"></i><h3>Department Decision</h3></div>
+                <pre class="card-body" data-content="specialist">---</pre>
+            </article>
+            <article class="bento-card span-2" id="draft-card">
+                <div class="bento-header"><i data-lucide="pen-tool"></i><h3>Result</h3></div>
+                <pre class="card-body" data-content="draft">---</pre>
+            </article>
+        </section>
+    </div>
+
+    <!-- Right: live trace -->
+    <aside class="right-pane">
+        <section class="panel glass sticky-panel" id="trace-panel">
+            <div class="panel-header">
+                <h2><i data-lucide="list-tree"></i> Live Trace</h2>
+            </div>
+            <div id="trace-list" class="trace-feed"></div>
+        </section>
+    </aside>
+</main>
+
+<!-- Compose modal -->
+<div class="modal-overlay" id="compose-modal" hidden>
+    <div class="modal glass">
+        <div class="panel-header">
+            <h2><i data-lucide="pencil"></i> Compose Email</h2>
+            <button class="chip" id="compose-close">Close</button>
+        </div>
+        <form id="compose-form">
+            <label>Sender <input type="email" name="sender" required placeholder="customer@example.com" /></label>
+            <label>Subject <input type="text" name="subject" required placeholder="Email subject..." /></label>
+            <label>Body <textarea name="body" rows="6" required placeholder="Type the email content here..."></textarea></label>
+            <button type="submit" class="primary full-width"><i data-lucide="send"></i> Add to Inbox &amp; Select</button>
+        </form>
+    </div>
+</div>
+
+<script src="/static/app.js" defer></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (window.lucide) lucide.createIcons();
+    });
+</script>
+</body>
+</html>

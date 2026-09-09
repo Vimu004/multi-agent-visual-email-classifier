@@ -216,45 +216,6 @@ a:hover {
 
 .panel { padding: 1.75rem; }
 
-/* Dashboard Specifics */
-.mini-history-list {
-    display: flex;
-    flex-direction: column;
-    gap: 0.75rem;
-}
-.history-card {
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid var(--card-border);
-    border-radius: var(--radius-sm);
-    padding: 1rem;
-    transition: all 0.2s;
-}
-.history-card:hover {
-    background: rgba(255, 255, 255, 0.06);
-    border-color: var(--card-border-hover);
-}
-.history-card p {
-    margin: 0 0 0.25rem;
-    font-size: 0.85rem;
-    color: var(--text-muted);
-}
-.history-card p strong {
-    color: var(--text);
-    font-size: 0.95rem;
-}
-.history-card a {
-    font-size: 0.8rem;
-    display: inline-flex;
-    margin-top: 0.5rem;
-}
-
-.sample-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    margin-bottom: 1.5rem;
-}
-
 .chip {
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid var(--card-border);
@@ -648,19 +609,75 @@ button.full-width {
 .status-badge.warn { background: var(--warning-bg); color: var(--warning); }
 .status-badge.danger { background: rgba(239, 68, 68, 0.12); color: var(--danger); }
 
-.history-meta {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
+/* Hub-and-spoke graphical diagram (multi-agentic model) */
+.hub-diagram-wrap {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+    overflow-x: auto;
 }
-.history-card {
+.hub-diagram, .chain-diagram {
     width: 100%;
-    text-align: left;
+    height: auto;
     display: block;
-    cursor: pointer;
 }
+.hub-diagram { min-width: 720px; }
+.chain-diagram { max-width: 420px; margin: 0 auto; }
+
+.arrow-head { fill: rgba(255, 255, 255, 0.4); }
+.hub-line {
+    stroke: rgba(255, 255, 255, 0.18);
+    stroke-width: 2;
+}
+.hub-line-back {
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-dasharray: 4 4;
+}
+.diagram-node rect, .diagram-node polygon {
+    fill: var(--card);
+    stroke: var(--card-border-hover);
+    stroke-width: 1.5;
+}
+.diagram-node text {
+    fill: var(--text);
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 600;
+}
+.diagram-node .diagram-subtext {
+    fill: var(--text-muted);
+    font-size: 10.5px;
+    font-weight: 500;
+    font-family: var(--font-mono);
+}
+.diagram-node.node-hub rect { fill: rgba(99, 102, 241, 0.18); stroke: var(--accent); }
+.diagram-node.node-agent rect { fill: rgba(99, 102, 241, 0.08); stroke: var(--accent); }
+.diagram-node.node-risk rect { fill: rgba(245, 158, 11, 0.1); stroke: var(--warning); }
+.diagram-node.node-rule rect { fill: rgba(161, 161, 170, 0.08); stroke: var(--card-border-hover); }
+.diagram-node.node-external rect { fill: rgba(161, 161, 170, 0.05); stroke: var(--card-border-hover); stroke-dasharray: 5 4; }
+.diagram-node.node-gate polygon { fill: rgba(245, 158, 11, 0.12); stroke: var(--warning); }
+.diagram-node.node-human rect { fill: rgba(245, 158, 11, 0.14); stroke: var(--warning); }
+.diagram-node.node-final rect { fill: rgba(16, 185, 129, 0.14); stroke: var(--success); }
+
+.diagram-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+    margin-top: 1rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.diagram-legend span { display: inline-flex; align-items: center; gap: 0.4rem; }
+.legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+    border: 1.5px solid transparent;
+}
+.legend-dot.node-agent { background: rgba(99, 102, 241, 0.18); border-color: var(--accent); }
+.legend-dot.node-risk { background: rgba(245, 158, 11, 0.15); border-color: var(--warning); }
+.legend-dot.node-rule { background: rgba(161, 161, 170, 0.12); border-color: var(--card-border-hover); }
+.legend-dot.node-human { background: rgba(245, 158, 11, 0.2); border-color: var(--warning); }
 
 /* Architecture Layout */
 .architecture-layout, .history-layout, .workflow-detail-layout {
@@ -693,22 +710,17 @@ button.full-width {
 
 .arch-content {
     display: grid;
-    grid-template-columns: 2fr 1fr;
+    grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
     align-items: start;
 }
 
-.arch-side {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem;
-}
-
-.mermaid-container {
-    background: rgba(0, 0, 0, 0.2);
-    border-radius: var(--radius-md);
-    padding: 1.5rem;
-    overflow-x: auto;
+code {
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+    background: rgba(255, 255, 255, 0.08);
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
 }
 
 .journey-list {
@@ -829,6 +841,129 @@ button.full-width {
     grid-template-columns: 2fr 1fr;
     gap: 1.5rem;
     align-items: start;
+}
+
+/* ---------- Inbox page ---------- */
+
+.mode-toggle {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+.mode-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    justify-content: flex-start;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid var(--card-border);
+    color: var(--text-muted);
+    padding: 0.75rem 1rem;
+    border-radius: var(--radius-md);
+    text-align: left;
+    width: 100%;
+}
+.mode-btn small {
+    display: block;
+    font-weight: 400;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-left: auto;
+}
+.mode-btn span { font-weight: 600; color: var(--text); }
+.mode-btn.active {
+    border-color: var(--accent);
+    background: rgba(99, 102, 241, 0.12);
+    box-shadow: 0 0 0 1px var(--accent) inset;
+}
+.mode-btn.active i, .mode-btn.active span { color: var(--accent); }
+
+.inbox-list-panel .panel-header {
+    justify-content: space-between;
+    display: flex;
+}
+.compose-chip { display: inline-flex; align-items: center; gap: 0.4rem; }
+
+.inbox-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 60vh;
+    overflow-y: auto;
+}
+.inbox-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    padding: 0.85rem 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--card-border);
+    background: rgba(255, 255, 255, 0.02);
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+}
+.inbox-item:hover { border-color: var(--card-border-hover); background: rgba(255,255,255,0.05); }
+.inbox-item.selected { border-color: var(--accent); background: rgba(99,102,241,0.1); }
+.inbox-item .inbox-item-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+.inbox-item .inbox-item-subject { font-weight: 600; color: var(--text); font-size: 0.92rem; }
+.inbox-item .inbox-item-preview {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.reading-pane { min-height: 180px; }
+.reading-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: var(--text-muted);
+    padding: 2rem 0;
+    text-align: center;
+}
+.reading-empty i { width: 32px; height: 32px; }
+.reading-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+.reading-header h2 { margin: 0 0 0.25rem; font-size: 1.3rem; }
+.reading-body {
+    white-space: pre-wrap;
+    color: var(--text-muted);
+    line-height: 1.6;
+    background: rgba(0,0,0,0.2);
+    border-radius: var(--radius-md);
+    padding: 1rem;
+}
+
+/* Modal */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+.modal {
+    width: min(520px, 92vw);
+    padding: 1.75rem;
 }
 
 /* Utilities */

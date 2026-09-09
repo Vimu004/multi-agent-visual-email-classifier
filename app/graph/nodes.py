@@ -1,19 +1,14 @@
 """LangGraph node implementations."""
 from __future__ import annotations
 
+import json
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Type
 
 from pydantic import BaseModel
 
-from ..schemas import (
-    ClassificationResult,
-    DraftResponse,
-    ReviewerDecision,
-    SpecialistAnalysis,
-    SupervisorDecision,
-)
+from ..schemas import ClassificationResult, DraftResponse, ReviewerDecision
 from ..services.knowledge import resolve_knowledge
 from ..services.tracing import TraceLogger
 from .prompts import (
@@ -66,36 +61,84 @@ async def classification_node(state: EmailAgentState, deps: WorkflowDependencies
     return state
 
 
-async def supervisor_node(state: EmailAgentState, deps: WorkflowDependencies) -> EmailAgentState:
-    classification = state["classification"]
-    prompt = (
-        f"Classification: {classification}\n"
-        f"Email: {state['body']}"
-    )
-    with deps.tracer.span("supervisor_agent", "agent", _summarize(prompt)) as record:
-        result = await deps.model_call(SUPERVISOR_PROMPT, prompt, SupervisorDecision)
-        record["output_summary"] = f"Routed to {result.selected_specialist}"
+DEPARTMENT_INBOXES = {
+    "sales": "sales@northstar.example",
+    "technical_support": "techsupport@northstar.example",
+    "billing_support": "billing@northstar.example",
+    "account_access": "security@northstar.example",
+    "general": "support@northstar.example",
+    "spam": "quarantine@northstar.example",
+    "human_review": "support@northstar.example",
+}
+
+
+def route_node(state: EmailAgentState, deps: WorkflowDependencies) -> EmailAgentState:
+    """Agentic mode's entire "decision": classify, then forward. One agent,
+    one Think-Act-Observe pass — no risk check, no task execution, no HITL.
+    This is the naive baseline the multi-agentic mode is contrasted against."""
+
+    category = state["classification"]["category"]
+    inbox = DEPARTMENT_INBOXES.get(category, DEPARTMENT_INBOXES["general"])
+    with deps.tracer.span("route_agent", "agent", f"Routing {category} email") as record:
+        record["output_summary"] = f"Forwarded to {inbox}"
         record["status"] = "completed"
-    state["selected_specialist"] = result.selected_specialist
+    state["routed_to"] = inbox
+    state["status"] = "routed"
     return state
 
 
-async def specialist_node(state: EmailAgentState, deps: WorkflowDependencies) -> EmailAgentState:
-    specialist = state["selected_specialist"]
-    knowledge = resolve_knowledge(specialist)
-    state["knowledge"] = knowledge
-    prompt = (
-        f"Role: {specialist}\n"
-        f"Email: {state['body']}\n"
-        f"Classification: {state['classification']}\n"
-        f"Knowledge: {knowledge}"
-    )
-    system_prompt = SPECIALIST_PROMPTS.get(specialist, SPECIALIST_PROMPTS["general"])
-    with deps.tracer.span(f"{specialist}_agent", "agent", _summarize(prompt)) as record:
-        result = await deps.model_call(system_prompt, prompt, SpecialistAnalysis)
-        record["output_summary"] = result.analysis[:160]
-        record["status"] = "completed"
-    state["specialist_result"] = result.model_dump()
+async def multiagent_node(state: EmailAgentState, deps: WorkflowDependencies) -> EmailAgentState:
+    """Real multi-agent hop: a langgraph-supervisor supervisor hands the email
+    off to exactly one department agent, which analyzes it *and* decides an
+    action, then hands back. See ``chat_bridge.py`` for how the supervisor's
+    and each department's "model" is bridged onto this app's existing
+    structured model-call layer (works in fake mode and Azure mode alike)."""
+
+    # Imported here (not at module top) to avoid a circular import: chat_bridge
+    # imports WorkflowDependencies from this module.
+    from langchain_core.messages import HumanMessage
+    from langgraph.prebuilt import create_react_agent
+    from langgraph_supervisor import create_supervisor
+
+    from .chat_bridge import DepartmentBridgeModel, SupervisorBridgeModel
+
+    classification = state["classification"]
+    prompt = f"Classification: {classification}\nEmail: {state['body']}"
+
+    departments = list(SPECIALIST_PROMPTS.keys())
+    agents = [
+        create_react_agent(
+            model=DepartmentBridgeModel(department=dept, deps=deps),
+            tools=[],
+            name=f"{dept}_agent",
+        )
+        for dept in departments
+    ]
+    supervisor = create_supervisor(
+        agents=agents,
+        model=SupervisorBridgeModel(deps=deps),
+        output_mode="full_history",
+    ).compile()
+
+    result = await supervisor.ainvoke({"messages": [HumanMessage(content=prompt)]})
+
+    selected_specialist = None
+    specialist_payload = None
+    for message in result["messages"]:
+        name = getattr(message, "name", None)
+        if name and name.endswith("_agent"):
+            try:
+                specialist_payload = json.loads(message.content)
+                selected_specialist = specialist_payload.get("specialist", name.removesuffix("_agent"))
+            except (json.JSONDecodeError, TypeError):
+                continue
+
+    if specialist_payload is None:  # pragma: no cover - defensive, should not happen
+        raise RuntimeError("Multi-agent run produced no department decision")
+
+    state["selected_specialist"] = selected_specialist
+    state["knowledge"] = resolve_knowledge(selected_specialist)
+    state["specialist_result"] = specialist_payload
     return state
 
 
@@ -181,6 +224,21 @@ def human_pause_node(state: EmailAgentState, deps: WorkflowDependencies) -> Emai
         record["output_summary"] = state.get("approval_reason", "Awaiting decision")
         record["status"] = "pending"
     state["status"] = "pending_approval"
+    return state
+
+
+def finalize_routing_node(state: EmailAgentState, deps: WorkflowDependencies) -> EmailAgentState:
+    """Terminal node for the agentic graph: no draft, no approval — just a
+    record of where the email was forwarded."""
+
+    with deps.tracer.span("finalize", "node", "Routing complete") as record:
+        state["final_response"] = {
+            "subject": f"Fwd: {state['subject']}",
+            "body": f"Forwarded to {state.get('routed_to', 'support@northstar.example')} for handling.",
+        }
+        state["status"] = "completed"
+        record["output_summary"] = "Routing completed"
+        record["status"] = "completed"
     return state
 
 

@@ -2,7 +2,7 @@
 from collections.abc import Generator
 from contextlib import contextmanager
 
-from sqlalchemy import event
+from sqlalchemy import event, text
 from sqlmodel import Session, SQLModel, create_engine
 
 from .config import get_settings
@@ -25,6 +25,19 @@ def init_db() -> None:
     """Create database tables when the app starts."""
 
     SQLModel.metadata.create_all(engine)
+    _ensure_columns()
+
+
+def _ensure_columns() -> None:
+    """`create_all` only creates missing *tables*, not missing columns on an
+    already-existing sqlite file. Add columns introduced after the db file
+    was first created, so existing local history keeps working."""
+
+    with engine.connect() as conn:
+        existing = {row[1] for row in conn.execute(text("PRAGMA table_info(workflows)"))}
+        if "mode" not in existing:
+            conn.execute(text("ALTER TABLE workflows ADD COLUMN mode VARCHAR DEFAULT 'multi_agentic'"))
+            conn.commit()
 
 
 @contextmanager

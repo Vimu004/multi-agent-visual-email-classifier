@@ -6,7 +6,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Architecture — Multi-Agent Email Assistant</title>
     <link rel="stylesheet" href="/static/styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js" defer></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 
@@ -19,7 +18,7 @@
                 <span>EmailAgent.AI</span>
             </div>
             <div class="nav-links">
-                <a href="/">Dashboard</a>
+                <a href="/">Inbox</a>
                 <a href="/history">History</a>
                 <a href="/architecture" class="active">Architecture</a>
             </div>
@@ -33,141 +32,218 @@
     <main class="architecture-layout">
         <header class="page-header">
             <h1>System Architecture</h1>
-            <p>Supervisor-led LangGraph workflow with human-in-the-loop pauses.</p>
+            <p>Two pipelines, one shared inbox — an agentic baseline and a supervisor-led multi-agentic system built on <code>langgraph-supervisor</code>.</p>
         </header>
 
+        <!-- Mode A: Agentic -->
+        <section class="panel glass feature-panel diagram-panel">
+            <div class="panel-header">
+                <h2><i data-lucide="bot"></i> Mode A — Agentic (single agent)</h2>
+            </div>
+            <p class="text-sm text-muted" style="margin-bottom:1rem;">
+                One agent, one Think &rarr; Act &rarr; Observe pass. Classify, then forward. No risk check, no department decision, no human-in-the-loop.
+            </p>
+            <div class="hub-diagram-wrap">
+                <svg viewBox="0 0 420 480" class="chain-diagram" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Intake, classify, route, forward to department inbox, done">
+                    <defs>
+                        <marker id="arrowA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                            <path d="M0,0 L10,5 L0,10 z" class="arrow-head" />
+                        </marker>
+                    </defs>
+                    <line x1="150" y1="52" x2="150" y2="86" class="hub-line" marker-end="url(#arrowA)" />
+                    <line x1="150" y1="142" x2="150" y2="176" class="hub-line" marker-end="url(#arrowA)" />
+                    <line x1="150" y1="232" x2="150" y2="266" class="hub-line" marker-end="url(#arrowA)" />
+                    <line x1="150" y1="332" x2="150" y2="366" class="hub-line" marker-end="url(#arrowA)" />
+
+                    <g class="diagram-node node-rule" transform="translate(10,10)">
+                        <rect width="280" height="42" rx="10" />
+                        <text x="140" y="27" text-anchor="middle">Intake Node</text>
+                    </g>
+                    <g class="diagram-node node-agent" transform="translate(10,100)">
+                        <rect width="280" height="42" rx="10" />
+                        <text x="140" y="27" text-anchor="middle">Classification Agent</text>
+                    </g>
+                    <g class="diagram-node node-rule" transform="translate(10,190)">
+                        <rect width="280" height="42" rx="10" />
+                        <text x="140" y="27" text-anchor="middle">Route Agent</text>
+                    </g>
+                    <g class="diagram-node node-external" transform="translate(10,280)">
+                        <rect width="280" height="52" rx="10" />
+                        <text x="140" y="25" text-anchor="middle">Department's shared inbox</text>
+                        <text x="140" y="41" text-anchor="middle" class="diagram-subtext">external — billing@ / sales@ / techsupport@ ...</text>
+                    </g>
+                    <g class="diagram-node node-final" transform="translate(10,380)">
+                        <rect width="280" height="52" rx="10" />
+                        <text x="140" y="25" text-anchor="middle">Final: forwarded</text>
+                        <text x="140" y="41" text-anchor="middle" class="diagram-subtext">no risk check, no decision, no human review</text>
+                    </g>
+                </svg>
+            </div>
+        </section>
+
+        <!-- Mode B: Multi-Agentic -->
+        <section class="panel glass feature-panel diagram-panel">
+            <div class="panel-header">
+                <h2><i data-lucide="network"></i> Mode B — Multi-Agentic (supervisor + department agents)</h2>
+            </div>
+            <p class="text-sm text-muted" style="margin-bottom:1rem;">
+                A real <code>langgraph-supervisor</code> supervisor hands the email to exactly one department agent, which analyzes it <strong>and decides an action</strong> — then response, review, and a human-approval gate. Drawn as the supervisor hub it actually is.
+            </p>
+            <div class="hub-diagram-wrap">
+                <svg viewBox="0 0 1000 640" class="hub-diagram" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Supervisor hub with six department agents, feeding into response, review, and human approval">
+                    <!-- spokes: classifier -> hub -->
+                    <line x1="500" y1="70" x2="500" y2="150" class="hub-line" />
+
+                    <!-- spokes: hub -> departments -->
+                    <line x1="500" y1="150" x2="95"  y2="270" class="hub-line" />
+                    <line x1="500" y1="150" x2="257" y2="270" class="hub-line" />
+                    <line x1="500" y1="150" x2="419" y2="270" class="hub-line" />
+                    <line x1="500" y1="150" x2="581" y2="270" class="hub-line" />
+                    <line x1="500" y1="150" x2="743" y2="270" class="hub-line" />
+                    <line x1="500" y1="150" x2="905" y2="270" class="hub-line" />
+
+                    <!-- spokes: departments -> merge point above response -->
+                    <line x1="95"  y1="300" x2="500" y2="390" class="hub-line hub-line-back" />
+                    <line x1="257" y1="300" x2="500" y2="390" class="hub-line hub-line-back" />
+                    <line x1="419" y1="300" x2="500" y2="390" class="hub-line hub-line-back" />
+                    <line x1="581" y1="300" x2="500" y2="390" class="hub-line hub-line-back" />
+                    <line x1="743" y1="300" x2="500" y2="390" class="hub-line hub-line-back" />
+                    <line x1="905" y1="300" x2="500" y2="390" class="hub-line hub-line-back" />
+
+                    <!-- response -> reviewer -> gate -> human/final -->
+                    <line x1="500" y1="420" x2="500" y2="460" class="hub-line" />
+                    <line x1="500" y1="490" x2="500" y2="520" class="hub-line" />
+                    <line x1="470" y1="545" x2="330" y2="585" class="hub-line" />
+                    <line x1="530" y1="545" x2="670" y2="585" class="hub-line" />
+
+                    <!-- Classification node -->
+                    <g class="diagram-node node-rule" transform="translate(430,30)">
+                        <rect width="140" height="40" rx="10" />
+                        <text x="70" y="25" text-anchor="middle">Classifier</text>
+                    </g>
+
+                    <!-- Supervisor hub -->
+                    <g class="diagram-node node-hub" transform="translate(430,150)">
+                        <rect width="140" height="60" rx="14" />
+                        <text x="70" y="26" text-anchor="middle">Supervisor</text>
+                        <text x="70" y="44" text-anchor="middle" class="diagram-subtext">create_supervisor</text>
+                    </g>
+
+                    <!-- Department agents -->
+                    <g class="diagram-node node-agent" transform="translate(30,270)">
+                        <rect width="130" height="50" rx="10" />
+                        <text x="65" y="22" text-anchor="middle">Spam</text>
+                        <text x="65" y="38" text-anchor="middle" class="diagram-subtext">no_action</text>
+                    </g>
+                    <g class="diagram-node node-agent" transform="translate(192,270)">
+                        <rect width="130" height="50" rx="10" />
+                        <text x="65" y="22" text-anchor="middle">Sales</text>
+                        <text x="65" y="38" text-anchor="middle" class="diagram-subtext">send_pricing</text>
+                    </g>
+                    <g class="diagram-node node-agent" transform="translate(354,270)">
+                        <rect width="130" height="50" rx="10" />
+                        <text x="65" y="22" text-anchor="middle">Technical</text>
+                        <text x="65" y="38" text-anchor="middle" class="diagram-subtext">create_ticket</text>
+                    </g>
+                    <g class="diagram-node node-agent node-risk" transform="translate(516,270)">
+                        <rect width="130" height="50" rx="10" />
+                        <text x="65" y="22" text-anchor="middle">Billing</text>
+                        <text x="65" y="38" text-anchor="middle" class="diagram-subtext">approve/deny/escalate</text>
+                    </g>
+                    <g class="diagram-node node-agent node-risk" transform="translate(678,270)">
+                        <rect width="130" height="50" rx="10" />
+                        <text x="65" y="22" text-anchor="middle">Account Access</text>
+                        <text x="65" y="38" text-anchor="middle" class="diagram-subtext">verify_then_update</text>
+                    </g>
+                    <g class="diagram-node node-agent" transform="translate(840,270)">
+                        <rect width="130" height="50" rx="10" />
+                        <text x="65" y="22" text-anchor="middle">General</text>
+                        <text x="65" y="38" text-anchor="middle" class="diagram-subtext">kb_link</text>
+                    </g>
+
+                    <!-- Response / Reviewer -->
+                    <g class="diagram-node node-rule" transform="translate(430,390)">
+                        <rect width="140" height="30" rx="8" />
+                        <text x="70" y="20" text-anchor="middle">Response Agent</text>
+                    </g>
+                    <g class="diagram-node node-rule" transform="translate(430,460)">
+                        <rect width="140" height="30" rx="8" />
+                        <text x="70" y="20" text-anchor="middle">Reviewer Agent</text>
+                    </g>
+
+                    <!-- Gate -->
+                    <g class="diagram-node node-gate" transform="translate(420,505)">
+                        <polygon points="80,0 160,30 80,60 0,30" />
+                        <text x="80" y="35" text-anchor="middle">Approve?</text>
+                    </g>
+
+                    <!-- Human / Final -->
+                    <g class="diagram-node node-human" transform="translate(260,585)">
+                        <rect width="140" height="40" rx="10" />
+                        <text x="70" y="25" text-anchor="middle">Human Approval</text>
+                    </g>
+                    <g class="diagram-node node-final" transform="translate(600,585)">
+                        <rect width="140" height="40" rx="10" />
+                        <text x="70" y="25" text-anchor="middle">Final Response</text>
+                    </g>
+                </svg>
+            </div>
+            <div class="diagram-legend">
+                <span><i class="legend-dot node-agent"></i> Department agent (LLM decision)</span>
+                <span><i class="legend-dot node-risk"></i> High-risk agent (usually pauses for approval)</span>
+                <span><i class="legend-dot node-rule"></i> Deterministic node</span>
+                <span><i class="legend-dot node-human"></i> Human-in-the-loop</span>
+            </div>
+        </section>
+
+        <!-- Explainers -->
         <div class="arch-content">
-            <!-- Main Diagram -->
-            <section class="panel glass feature-panel diagram-panel">
+            <section class="panel glass">
                 <div class="panel-header">
-                    <h2><i data-lucide="network"></i> Workflow Topology</h2>
+                    <h2><i data-lucide="info"></i> Request Journey (multi-agentic, billing example)</h2>
                 </div>
-                <div class="mermaid-container">
-                    <pre class="mermaid">
-flowchart TD
-    UI[Browser Dashboard]
-    API[FastAPI API]
-    Intake[Intake Node]
-    Classifier[Classification Agent]
-    Supervisor[Supervisor Agent]
-
-    Spam[Spam Agent]
-    Sales[Sales Agent]
-    Tech[Technical Support Agent]
-    Billing[Billing Support Agent]
-    Account[Account Access Agent]
-    General[General Agent]
-
-    KB[(Local JSON Knowledge)]
-    State[(LangGraph Shared State)]
-    Response[Response Agent]
-    Reviewer[Reviewer Agent]
-    Gate{Human approval required?}
-    Human[Human Approval UI]
-    Final[Final Response]
-    DB[(SQLite)]
-    Trace[Local Trace Timeline]
-
-    UI --> API
-    API --> Intake
-    Intake --> Classifier
-    Classifier --> Supervisor
-
-    Supervisor --> Spam
-    Supervisor --> Sales
-    Supervisor --> Tech
-    Supervisor --> Billing
-    Supervisor --> Account
-    Supervisor --> General
-
-    KB --> Spam
-    KB --> Sales
-    KB --> Tech
-    KB --> Billing
-    KB --> Account
-    KB --> General
-
-    Spam --> State
-    Sales --> State
-    Tech --> State
-    Billing --> State
-    Account --> State
-    General --> State
-
-    State --> Response
-    Response --> Reviewer
-    Reviewer --> Gate
-
-    Gate -->|No| Final
-    Gate -->|Yes| Human
-    Human -->|Approve| Final
-    Human -->|Reject| Final
-
-    API --> DB
-    API --> Trace
-
-
-    
-                </pre>
-                </div>
+                <ol class="journey-list">
+                    <li>Customer submits a billing email with a duplicate-charge complaint.</li>
+                    <li>Classification Agent identifies <strong>billing_support</strong>.</li>
+                    <li>Supervisor hands off to the Billing Support Agent via a real <code>langgraph-supervisor</code> tool call.</li>
+                    <li>Billing agent reads the local billing policy JSON and decides an <strong>action</strong> — e.g. <code>escalate</code> for a refund over the auto-approve threshold.</li>
+                    <li>Billing agent hands back to the supervisor.</li>
+                    <li>Response Agent drafts a reply referencing that decision.</li>
+                    <li>Reviewer flags the refund as sensitive.</li>
+                    <li>Workflow pauses and persists in SQLite.</li>
+                    <li>Human approves or edits the draft from the inbox UI.</li>
+                    <li>Final response is stored and shown.</li>
+                </ol>
             </section>
 
-            <!-- Explainers -->
-            <div class="arch-side">
-                <section class="panel glass">
-                    <div class="panel-header">
-                        <h2><i data-lucide="info"></i> Request Journey</h2>
-                    </div>
-                    <ol class="journey-list">
-                        <li>User submits the account-access email.</li>
-                        <li>Classification Agent identifies <strong>account_access</strong>.</li>
-                        <li>Supervisor selects the Account Access Agent.</li>
-                        <li>Specialist reads the local account policy JSON.</li>
-                        <li>Response Agent drafts a secure reply.</li>
-                        <li>Reviewer flags the identity change as sensitive.</li>
-                        <li>Workflow pauses and persists in SQLite.</li>
-                        <li>Human approves via the dashboard.</li>
-                        <li>Final response is stored and shown.</li>
-                    </ol>
-                </section>
-
-                <section class="panel glass">
-                    <div class="panel-header">
-                        <h2><i data-lucide="shield-alert"></i> Human-in-the-loop</h2>
-                    </div>
-                    <p class="text-sm">The LangGraph approval gate pauses execution when classifier confidence is low,
-                        when specialists raise a high-risk flag, or when the reviewer requests human input. The current
-                        state and trace are stored in SQLite so the presenter can resume or reject from the dashboard.
-                        Account changes, refunds, deletions, and any schema validation issues always require approval.
-                    </p>
-                </section>
-            </div>
+            <section class="panel glass">
+                <div class="panel-header">
+                    <h2><i data-lucide="shield-alert"></i> Human-in-the-loop (multi-agentic only)</h2>
+                </div>
+                <p class="text-sm">The approval gate pauses execution when classifier confidence is low, when a
+                    department agent's decision is high-risk, or when the reviewer requests human input. State and
+                    trace are stored in SQLite so the presenter can resume or reject from the inbox UI. Refunds,
+                    account/identity changes, and chargeback threats always require approval — the agentic mode has
+                    no equivalent check at all, which is the point of contrast between the two modes.
+                </p>
+            </section>
         </div>
 
         <!-- Agent Roster Grid -->
         <section class="panel glass">
             <div class="panel-header">
                 <h2><i data-lucide="users"></i> Agent Roster</h2>
-                <p class="text-sm text-muted">Complete breakdown of all LangGraph nodes in the system.</p>
+                <p class="text-sm text-muted">Every node in both graphs (see <code>app/graph/workflow.py</code>).</p>
             </div>
             <div class="bento-grid agent-grid" id="agent-cards">
                 {% for agent in [
-                {"name":"Classification Agent","input":"Raw email","output":"category, confidence,
-                priority","llm":True,"final":False},
-                {"name":"Supervisor Agent","input":"classification","output":"specialist
-                selection","llm":True,"final":False},
-                {"name":"Spam Agent","input":"spam emails + policy","output":"risk guidance","llm":True,"final":False},
-                {"name":"Sales Agent","input":"sales questions","output":"sales analysis","llm":True,"final":False},
-                {"name":"Technical Support Agent","input":"error details","output":"tech
-                diagnosis","llm":True,"final":False},
-                {"name":"Billing Support Agent","input":"billing disputes","output":"billing
-                guidance","llm":True,"final":False},
-                {"name":"Account Access Agent","input":"account recovery","output":"identity
-                steps","llm":True,"final":False},
-                {"name":"General Agent","input":"simple questions","output":"quick answers","llm":True,"final":False},
-                {"name":"Response Agent","input":"email + analysis","output":"draft reply","llm":True,"final":False},
-                {"name":"Reviewer Agent","input":"draft + policy","output":"decision","llm":True,"final":False},
-                {"name":"Human Approval","input":"paused workflow","output":"approve/reject","llm":False,"final":True}
+                {"name":"Classification Agent","mode":"Both","input":"Raw email","output":"category, confidence, priority","llm":True},
+                {"name":"Route Agent","mode":"Agentic","input":"classification","output":"forwarding address (no decision)","llm":False},
+                {"name":"Supervisor","mode":"Multi-agentic","input":"classification","output":"handoff via langgraph-supervisor","llm":True},
+                {"name":"Spam / Sales / Technical / Billing / Account / General Agent","mode":"Multi-agentic","input":"email + classification + local knowledge","output":"analysis + a decided action","llm":True},
+                {"name":"Response Agent","mode":"Multi-agentic","input":"department decision","output":"draft reply","llm":True},
+                {"name":"Reviewer Agent","mode":"Multi-agentic","input":"draft + policy","output":"approve / revise / escalate","llm":True},
+                {"name":"Human Approval","mode":"Multi-agentic","input":"paused workflow","output":"approve / reject","llm":False}
                 ] %}
                 <article class="agent-card bento-card">
                     <div class="agent-header">
@@ -179,6 +255,10 @@ flowchart TD
                         {% endif %}
                     </div>
                     <div class="agent-meta">
+                        <div class="meta-row">
+                            <span class="meta-label">Mode</span>
+                            <span class="meta-val">{{ agent.mode }}</span>
+                        </div>
                         <div class="meta-row">
                             <span class="meta-label">Input</span>
                             <span class="meta-val">{{ agent.input }}</span>
@@ -194,7 +274,6 @@ flowchart TD
         </section>
 
     </main>
-    <script src="/static/app.js" defer></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             if (window.lucide) lucide.createIcons();

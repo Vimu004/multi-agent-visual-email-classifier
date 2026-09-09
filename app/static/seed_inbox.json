@@ -1,0 +1,67 @@
+[
+  {
+    "id": "seed-01",
+    "sender": "priya.nandan@growthly.io",
+    "subject": "Enterprise pricing + rollout timeline for ~500 seats",
+    "body": "Hi NorthStar team,\n\nMy name is Priya and I lead procurement at Growthly. We've been piloting your platform with a 12-person team in our ops department for the last six weeks, and the results have been strong enough that leadership wants to roll it out company-wide.\n\nWe're looking at roughly 500 seats across three regions (US, UK, and Singapore), with a phased rollout starting next quarter. Before we take this to our budget committee, could you send over:\n\n1. Enterprise-tier pricing at that seat count, including any volume discount\n2. SSO/SCIM support details, since we're a Okta shop\n3. A rough timeline for a phased rollout (region by region)\n4. Whether there's a dedicated CSM for accounts this size\n\nHappy to hop on a call this week if that's easier than email. Thanks in advance!\n\nBest,\nPriya Nandan\nHead of Procurement, Growthly",
+    "expected_department": "sales"
+  },
+  {
+    "id": "seed-02",
+    "sender": "devon.park@bracketstudio.com",
+    "subject": "Order-export dashboard crashes every time on the Reports tab",
+    "body": "Hey team,\n\nWe've been trying to pull our monthly order history for reconciliation and running into a wall. Every time I go to Reports > Export > CSV, the whole dashboard freezes for about 10 seconds and then shows a white screen with a generic 'Something went wrong' error. This happens consistently, on both Chrome and Firefox, and started sometime after the release earlier this week.\n\nSteps to reproduce:\n1. Log in, go to Reports\n2. Select date range: last 30 days\n3. Click Export > CSV\n4. Dashboard crashes ~10s later\n\nWe've tried smaller date ranges (7 days) and it still crashes, just takes longer to happen. This is blocking our finance team's month-end close, so any urgency you can bring to it would be hugely appreciated. Let me know if you need browser console logs or a screen recording.\n\nThanks,\nDevon",
+    "expected_department": "technical_support"
+  },
+  {
+    "id": "seed-03",
+    "sender": "finance@bracketstudio.com",
+    "subject": "Double-charged on invoice #8841 — need a refund",
+    "body": "Hello,\n\nI'm reaching out from the finance team at Bracket Studio. When reconciling this month's card statement, we noticed invoice #8841 (dated the 3rd) was charged to our card twice — once for $1,240.00 and again for $1,240.00 exactly 40 minutes later. Our bank confirms both charges cleared.\n\nCould you please investigate and issue a refund for the duplicate charge? I've attached the statement excerpt showing both transaction IDs for reference (TXN-88410-A and TXN-88410-B). We'd like this resolved before our books close at the end of the month.\n\nPlease let me know what additional information you need from our side.\n\nThank you,\nFinance Team, Bracket Studio",
+    "expected_department": "billing_support"
+  },
+  {
+    "id": "seed-04",
+    "sender": "morgan.lee@example.com",
+    "subject": "Locked out after changing my phone number — verification codes going to old device",
+    "body": "Hi there,\n\nI switched to a new phone carrier and number last week, and now I can't log into my account. Every time I try, it sends a 2FA verification code by SMS, but it's going to my OLD number which I no longer have access to — I never got a chance to update it in my account settings because I was already logged in on my old phone and didn't think to change it beforehand.\n\nI have my account email, the last four digits of my old phone number, and a photo ID if that helps verify it's really me. Is there a way to update my phone number on file so I can get back in? I use this account daily for my team's scheduling, so I'd really appreciate a quick turnaround.\n\nThanks so much,\nMorgan Lee",
+    "expected_department": "account_access"
+  },
+  {
+    "id": "seed-05",
+    "sender": "curious.customer@example.com",
+    "subject": "Quick one — what are your weekend / holiday support hours?",
+    "body": "Hi! Not an urgent issue, just planning ahead. We're onboarding a new team member this Saturday and want to make sure someone's around if they hit a snag.\n\nCould you let me know:\n- What hours is support staffed on weekends?\n- Do you have any coverage on public holidays?\n- Is there a difference in response time for chat vs. email on weekends?\n\nNo rush at all on this one. Thanks for your help!\n\nBest,\nA curious customer",
+    "expected_department": "general"
+  },
+  {
+    "id": "seed-06",
+    "sender": "prizes@totally-legit-rewards.win",
+    "subject": "🎉 CONGRATULATIONS!! You've been selected to WIN a $500 Visa Gift Card!!",
+    "body": "CONGRATULATIONS!!!\n\nOur system has randomly selected YOUR email address as today's lucky winner of a $500 prepaid Visa gift card! This is a limited-time offer and your prize will expire in 24 HOURS if not claimed.\n\nTo claim your prize, simply click the link below and verify your identity by entering your account password and the last 4 digits of your card on file. This is required for security purposes only and will NOT be shared with anyone.\n\n>>> CLICK HERE TO CLAIM YOUR $500 PRIZE NOW <<<\n\nAct fast — thousands of people are trying to claim prizes right now and yours will be given away if not claimed in time!\n\nThe Rewards Team",
+    "expected_department": "spam"
+  },
+  {
+    "id": "seed-07",
+    "sender": "ops.lead@bracketstudio.com",
+    "subject": "Want to upgrade to Pro, but our current invoice already looks off",
+    "body": "Hi team,\n\nTwo things in one email, sorry — they're related.\n\nFirst: we'd like to move from our current Growth plan to Pro, mainly for the higher API rate limits and the extra seats. Can someone confirm what that upgrade would cost per month at our current seat count (14 seats)?\n\nSecond, and the reason I'm hesitant to hit the upgrade button just yet — our invoice from last cycle already looks about 20% higher than what I calculated based on our plan and seat count. I want to understand that discrepancy before we add Pro pricing on top of it, in case something's being double-billed or mis-metered on the API usage side.\n\nCan someone from billing take a look at our last invoice, and then loop in sales once that's cleared up so we can finalize the upgrade?\n\nThanks,\nOps Lead, Bracket Studio",
+    "expected_department": "billing_support",
+    "note": "Ambiguous — reads like sales (upgrade) and billing (invoice discrepancy) at once; fake-mode keyword match resolves it as billing since that's the blocking concern."
+  },
+  {
+    "id": "seed-08",
+    "sender": "legal@bracketstudio.com",
+    "subject": "Third notice: refund the $4,800 overcharge or we file a chargeback",
+    "body": "This is our third email regarding this matter, following up on tickets #4471 and #4502 which received no substantive response beyond an auto-reply.\n\nOur annual contract renewal was charged at $4,800 above the rate we agreed to in our signed order form (copy attached to ticket #4471). We have asked twice for either a corrected invoice or a refund of the difference, and have received neither.\n\nWe are giving NorthStar 48 hours from this email to refund the $4,800 overcharge in full. If we do not receive confirmation of the refund within that window, we will file a chargeback dispute with our card issuer and will also be pausing any further payments on this account pending resolution.\n\nWe would strongly prefer to resolve this directly rather than escalate further. Please have someone with authority to issue refunds respond to this email today.\n\nRegards,\nLegal & Finance, Bracket Studio",
+    "expected_department": "billing_support",
+    "note": "High-risk — large amount, explicit chargeback threat, references prior unresolved tickets. Must not auto-resolve; this is exactly the scenario the approval gate exists for."
+  },
+  {
+    "id": "seed-09",
+    "sender": "integrations@partnerco.dev",
+    "subject": "Webhook signature verification failing for 100% of events since last night's release",
+    "body": "Hi NorthStar engineering,\n\nWe integrate with your platform via webhooks to sync order status into our fulfillment system. Since roughly 11:40 PM UTC last night — which lines up with the release notes you published for v2.14 — every single webhook event we receive is failing our HMAC signature verification.\n\nWe haven't changed anything on our end: same signing secret, same signature-check logic that's been running in production for eight months. Our working theory is that the payload serialization changed slightly (maybe key ordering or whitespace) in a way that shifts the signature without you having rotated the actual secret.\n\nThis has completely broken our order-fulfillment pipeline overnight — we're currently processing orders manually as a stopgap, which doesn't scale past today. Could someone from your API/platform team take a look urgently? Happy to share example payloads and the exact signatures we computed vs. what you sent, on a call if that's faster.\n\nThanks,\nIntegrations Team, PartnerCo",
+    "expected_department": "technical_support"
+  }
+]

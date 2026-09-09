@@ -22,9 +22,9 @@ def _ui_status() -> UIStatus:
 
 
 @router.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request) -> HTMLResponse:
+async def inbox(request: Request) -> HTMLResponse:
     return templates.TemplateResponse(
-        "index.html", {"request": request, "ui_status": _ui_status()}
+        "inbox.html", {"request": request, "ui_status": _ui_status()}
     )
 
 
