@@ -14,7 +14,7 @@ from ..config import get_settings
 from ..database import engine, get_session
 from ..graph.nodes import WorkflowDependencies
 from ..graph.state import EmailAgentState
-from ..graph.workflow import build_main_graph
+from ..graph.workflow import build_agentic_graph, build_multiagent_graph
 from ..models import WorkflowRecord
 from ..schemas import DraftResponse, EmailSubmission, WorkflowRunResponse
 from ..services import azure_model, fake_model
@@ -48,6 +48,7 @@ def _select_model_callable() -> SettingsModelFn:
 def _build_initial_state(workflow_id: str, payload: EmailSubmission) -> EmailAgentState:
     return EmailAgentState(
         workflow_id=workflow_id,
+        mode=payload.mode,
         sender=payload.sender,
         subject=payload.subject,
         body=payload.body,
@@ -69,7 +70,7 @@ async def _run_workflow(workflow_id: str, payload: EmailSubmission, model_callab
         initial_state = _build_initial_state(workflow_id, payload)
         tracer = TraceLogger(workflow_id=workflow_id, session=session, accumulator=initial_state["trace"])
         deps = WorkflowDependencies(model_call=model_callable, tracer=tracer)
-        graph = build_main_graph(deps)
+        graph = build_agentic_graph(deps) if payload.mode == "agentic" else build_multiagent_graph(deps)
         result_state = await graph.ainvoke(initial_state)
 
         record = session.get(WorkflowRecord, workflow_id)
@@ -109,6 +110,7 @@ async def analyze_email(payload: EmailSubmission) -> WorkflowRunResponse:
             subject=payload.subject,
             body=payload.body,
             status="processing",
+            mode=payload.mode,
         )
         session.add(record)
 

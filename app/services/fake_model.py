@@ -6,16 +6,16 @@ from typing import Type
 from pydantic import BaseModel
 
 _KEYWORDS = {
-    "sales": ["pricing", "quote", "enterprise"],
-    "technical_support": ["crash", "error", "not working", "bug", "issue"],
     "billing_support": ["charged", "invoice", "refund", "billing", "payment"],
-    "account_access": ["login", "verification", "phone", "mfa", "code"],
-    "spam": ["won", "prize", "password", "lottery"],
+    "account_access": ["login", "verification code", "phone", "mfa", "password reset"],
+    "spam": ["won a prize", "lottery", "click here", "claim your"],
+    "sales": ["pricing", "quote", "enterprise", "plan upgrade"],
+    "technical_support": ["crash", "crashes", "error", "not working", " bug ", "doesn't work", "broken", "failing"],
 }
 
 
 def _detect_category(text: str) -> str:
-    lowered = text.lower()
+    lowered = f" {text.lower()} "
     for category, tokens in _KEYWORDS.items():
         if any(token in lowered for token in tokens):
             return category
@@ -46,12 +46,27 @@ def _make_supervisor(text: str) -> dict:
     }
 
 
+_DEPARTMENT_ACTIONS = {
+    "billing_support": ("escalate", "Refund request flagged for manual approval (policy: refunds >$0 require sign-off)."),
+    "account_access": ("verify_then_update", "Identity verification required before any account change is made."),
+    "technical_support": ("create_ticket", "Ticket #{ticket} created for engineering follow-up."),
+    "sales": ("send_pricing", "Standard pricing sheet attached; enterprise quotes routed to a human rep."),
+    "general": ("kb_link", "Pointed the customer to the relevant help-center article."),
+    "spam": ("no_action", "Flagged as spam; no reply sent."),
+}
+
+
 def _make_specialist(category: str) -> dict:
     high_risk = category in {"account_access", "billing_support"}
+    action, detail = _DEPARTMENT_ACTIONS.get(category, ("no_action", None))
+    if detail and "{ticket}" in detail:
+        detail = detail.format(ticket=f"{abs(hash(category)) % 9000 + 1000}")
     return {
         "specialist": category,
         "analysis": f"Synthetic analysis for {category} request.",
         "recommended_action": "Follow policy guidelines",
+        "action": action,
+        "action_detail": detail,
         "information_needed": ["Confirmation details"],
         "risk": "high" if high_risk else "medium",
         "requires_human_review": high_risk,

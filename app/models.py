@@ -18,6 +18,7 @@ class WorkflowRecord(SQLModel, table=True):
     category: Optional[str] = Field(default=None)
     selected_specialist: Optional[str] = Field(default=None)
     status: str = Field(default="created")
+    mode: str = Field(default="multi_agentic")
     requires_human_approval: bool = Field(default=False)
     approval_reason: Optional[str] = Field(default=None)
     human_decision: Optional[str] = Field(default=None)

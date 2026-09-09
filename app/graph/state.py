@@ -1,11 +1,12 @@
 """Typed LangGraph state definitions."""
 from __future__ import annotations
 
-from typing import TypedDict
+from typing import Literal, TypedDict
 
 
 class EmailAgentState(TypedDict, total=False):
     workflow_id: str
+    mode: Literal["agentic", "multi_agentic"]
 
     sender: str
     subject: str
@@ -13,6 +14,7 @@ class EmailAgentState(TypedDict, total=False):
 
     classification: dict
     selected_specialist: str
+    routed_to: str
 
     knowledge: list[dict]
     specialist_result: dict

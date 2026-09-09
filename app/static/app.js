@@ -3,40 +3,7 @@ const state = {
     pollTimer: null,
 };
 
-const samples = {
-    sales: {
-        sender: "buyer@example.com",
-        subject: "Requesting enterprise pricing",
-        body: "Hello, can I get an enterprise quote for 500 seats?",
-    },
-    technical: {
-        sender: "dev@example.com",
-        subject: "The dashboard crashes",
-        body: "The dashboard crashes whenever I export a CSV. Please help.",
-    },
-    billing: {
-        sender: "finance@example.com",
-        subject: "Refund for incorrect invoice",
-        body: "We were charged twice for invoice 8841. Please issue a refund.",
-    },
-    account: {
-        sender: "customer@example.com",
-        subject: "Cannot access my account after changing my phone",
-        body: "Hi, I changed my mobile phone yesterday and now the verification code is going to my old number. I cannot log in. Can someone update the number for me?",
-    },
-    spam: {
-        sender: "scam@example.com",
-        subject: "You won a prize!",
-        body: "Click here to claim your password reward!",
-    },
-    general: {
-        sender: "curious@example.com",
-        subject: "Weekend support hours",
-        body: "What are your weekend support hours?",
-    },
-};
-
-// Ordered pipeline stages. Keys match the `data-node` attributes in index.html.
+// Ordered pipeline stages for the multi-agentic mode's stepper.
 const STAGES = [
     "intake",
     "classify",
@@ -64,6 +31,7 @@ const AGENT_STAGE = {
     intake: "intake",
     classification_agent: "classify",
     supervisor_agent: "supervisor",
+    route_agent: "route",
     response_agent: "response",
     reviewer_agent: "review",
     human_pause: "approval",
@@ -74,9 +42,29 @@ const AGENT_STAGE = {
 function stageFor(agentName) {
     if (!agentName) return null;
     if (AGENT_STAGE[agentName]) return AGENT_STAGE[agentName];
-    // Specialist agents are named "<specialist>_agent" (e.g. account_access_agent).
+    // Department agents are named "<department>_agent" (e.g. account_access_agent).
     if (agentName.endsWith("_agent")) return "specialist";
     return null;
+}
+
+// Two pipelines share one stepper component: the naive agentic baseline
+// (classify -> forward, nothing else) and the full multi-agentic chain.
+const STAGE_SETS = {
+    agentic: ["intake", "classify", "route", "final"],
+    multi_agentic: STAGES,
+};
+STAGE_LABELS.route = "Route & Forward";
+
+let ACTIVE_STAGES = STAGES;
+
+function renderStepperGrid(container, stages) {
+    if (!container) return;
+    container.innerHTML = stages
+        .map(
+            (key, i) =>
+                `<div class="node" data-node="${key}"><span class="node-index">${i + 1}</span>${STAGE_LABELS[key]}</div>`
+        )
+        .join("");
 }
 
 const TERMINAL_STATUSES = new Set(["completed", "rejected", "error", "pending_approval"]);
@@ -102,18 +90,6 @@ async function fetchDetail(workflowId) {
     const response = await fetch(`/api/workflows/${workflowId}`);
     if (!response.ok) throw new Error("Workflow not found");
     return response.json();
-}
-
-function attachSampleButtons(form) {
-    document.querySelectorAll("[data-sample]").forEach((button) => {
-        button.addEventListener("click", () => {
-            const sample = samples[button.dataset.sample];
-            if (!sample) return;
-            form.sender.value = sample.sender;
-            form.subject.value = sample.subject;
-            form.body.value = sample.body;
-        });
-    });
 }
 
 function resetCards() {
@@ -163,7 +139,7 @@ function setRunStatus(status, detail) {
 function renderStepper(trace, status) {
     const reached = new Set((trace || []).map((t) => stageFor(t.agent_name)).filter(Boolean));
 
-    STAGES.forEach((key) => {
+    ACTIVE_STAGES.forEach((key) => {
         const el = qs(`[data-node="${key}"]`);
         if (!el) return;
         el.classList.remove("completed", "active", "error", "rejected");
@@ -187,15 +163,15 @@ function renderStepper(trace, status) {
     // While running, highlight the next stage that hasn't reported yet.
     if (status === "processing" || status === "created") {
         const next =
-            STAGES.find((k) => k !== "approval" && k !== "final" && !reached.has(k)) ||
-            STAGES.find((k) => !reached.has(k));
+            ACTIVE_STAGES.find((k) => k !== "approval" && k !== "final" && !reached.has(k)) ||
+            ACTIVE_STAGES.find((k) => !reached.has(k));
         if (next) {
             const el = qs(`[data-node="${next}"]`);
             if (el && !el.classList.contains("completed")) el.classList.add("active");
         }
     }
     if (status === "error") {
-        const failed = STAGES.find((k) => !reached.has(k));
+        const failed = ACTIVE_STAGES.find((k) => !reached.has(k));
         if (failed) {
             const el = qs(`[data-node="${failed}"]`);
             if (el) el.classList.add("error");
@@ -250,13 +226,16 @@ function renderCards(detail) {
     const specialist = s.specialist_result;
     const draft = detail.status === "completed" ? detail.final_response || s.final_response || s.draft_response : s.draft_response;
     const review = s.review_result;
+    const isAgentic = detail.mode === "agentic";
 
     setContent("classification", classification && formatClassification(classification));
-    setContent(
-        "supervisor",
-        s.selected_specialist ? `Routed to: ${s.selected_specialist}` : null
-    );
-    setContent("specialist", specialist && formatSpecialist(specialist));
+    if (isAgentic) {
+        setContent("supervisor", s.routed_to ? `Forwarded to: ${s.routed_to}\n(No supervisor step — agentic mode routes directly.)` : null);
+        if (detail.status === "completed") setContent("specialist", "Not applicable — agentic mode has no department agent or decision step.");
+    } else {
+        setContent("supervisor", s.selected_specialist ? `Routed to: ${s.selected_specialist}` : null);
+        setContent("specialist", specialist && formatSpecialist(specialist));
+    }
     setContent("draft", draft && `${draft.subject || ""}\n\n${draft.body || ""}`.trim());
     setContent("review", review && formatReview(review));
 
@@ -286,7 +265,8 @@ function formatSpecialist(s) {
     return [
         `Risk: ${s.risk}`,
         s.analysis ? `\n${s.analysis}` : "",
-        s.recommended_action ? `\nAction: ${s.recommended_action}` : "",
+        s.action ? `\nDecision: ${s.action}` : "",
+        s.action_detail ? s.action_detail : "",
     ].join("\n");
 }
 
@@ -406,7 +386,6 @@ async function pollTick(workflowId) {
     if (TERMINAL_STATUSES.has(detail.status)) {
         stopPolling();
         toggleApprovalPanel(detail.status === "pending_approval", detail);
-        loadHistory();
     }
 }
 
@@ -419,76 +398,28 @@ function startPolling(workflowId) {
 
 /* ---------- History ---------- */
 
-async function loadHistory(panelSelector = "#history-list") {
+async function loadHistory(panelSelector = "#history-table tbody") {
     const container = qs(panelSelector);
     if (!container) return;
     const response = await fetch("/api/workflows");
     const data = await response.json();
-    if (container.tagName === "TBODY") {
-        container.innerHTML = data
-            .map(
-                (item) => `
-                <tr>
-                    <td>${item.id}</td>
-                    <td>${escapeHtml(item.subject)}</td>
-                    <td>${item.category || "—"}</td>
-                    <td><span class="status-badge ${statusClass(item.status)}">${prettyStatus(item.status)}</span></td>
-                    <td>${new Date(item.updated_at).toLocaleString()}</td>
-                    <td><a href="/workflows/${item.id}">View</a></td>
-                </tr>`
-            )
-            .join("");
-    } else {
-        container.innerHTML = data
-            .slice(0, 8)
-            .map(
-                (item) => `
-                <button class="history-card" data-open="${item.id}">
-                    <p><strong>${escapeHtml(item.subject)}</strong></p>
-                    <div class="history-meta">
-                        <span>${item.category || "Unclassified"}</span>
-                        <span class="status-badge ${statusClass(item.status)}">${prettyStatus(item.status)}</span>
-                    </div>
-                </button>`
-            )
-            .join("");
-        container.querySelectorAll("[data-open]").forEach((btn) => {
-            btn.addEventListener("click", () => startPolling(btn.dataset.open));
-        });
-    }
+    container.innerHTML = data
+        .map(
+            (item) => `
+            <tr>
+                <td>${item.id}</td>
+                <td>${escapeHtml(item.subject)}</td>
+                <td>${item.category || "—"}</td>
+                <td>${item.mode || "—"}</td>
+                <td><span class="status-badge ${statusClass(item.status)}">${prettyStatus(item.status)}</span></td>
+                <td>${new Date(item.updated_at).toLocaleString()}</td>
+                <td><a href="/workflows/${item.id}">View</a></td>
+            </tr>`
+        )
+        .join("");
 }
 
 /* ---------- Page initializers ---------- */
-
-function initDashboard() {
-    const form = document.getElementById("email-form");
-    attachSampleButtons(form);
-    form.addEventListener("submit", async (event) => {
-        event.preventDefault();
-        const payload = {
-            sender: form.sender.value,
-            subject: form.subject.value,
-            body: form.body.value,
-        };
-        resetCards();
-        setRunStatus("processing");
-        try {
-            const result = await postJSON("/api/emails/analyze", payload);
-            startPolling(result.workflow_id);
-            loadHistory();
-        } catch (error) {
-            setRunStatus("error", { approval_reason: error.message });
-            alert(error.message);
-        }
-    });
-    loadHistory();
-    wireApprovalButtons();
-
-    // Deep-link support: /?wf=<id> reopens an existing run.
-    const params = new URLSearchParams(window.location.search);
-    const wf = params.get("wf");
-    if (wf) startPolling(wf);
-}
 
 function initHistory() {
     loadHistory("#history-table tbody");
@@ -512,16 +443,135 @@ async function initWorkflowPage() {
     }
 }
 
-function initArchitecture() {
-    if (window.mermaid) {
-        window.mermaid.initialize({ startOnLoad: true, theme: "dark" });
+/* ---------- Inbox page (agentic vs multi-agentic demo) ---------- */
+
+const inboxState = {
+    mode: "agentic",
+    emails: [],
+    selected: null,
+};
+
+function renderInboxList() {
+    const container = qs("#inbox-list");
+    if (!container) return;
+    container.innerHTML = inboxState.emails
+        .map(
+            (email) => `
+            <button class="inbox-item ${inboxState.selected && inboxState.selected.id === email.id ? "selected" : ""}" data-email-id="${email.id}">
+                <div class="inbox-item-top">
+                    <span>${escapeHtml(email.sender)}</span>
+                </div>
+                <span class="inbox-item-subject">${escapeHtml(email.subject)}</span>
+                <span class="inbox-item-preview">${escapeHtml(email.body)}</span>
+            </button>`
+        )
+        .join("");
+    container.querySelectorAll("[data-email-id]").forEach((btn) => {
+        btn.addEventListener("click", () => selectEmail(btn.dataset.emailId));
+    });
+}
+
+function selectEmail(id) {
+    const email = inboxState.emails.find((e) => e.id === id);
+    if (!email) return;
+    inboxState.selected = email;
+    renderInboxList();
+    qs("#reading-empty").hidden = true;
+    qs("#reading-content").hidden = false;
+    qs("#reading-subject").textContent = email.subject;
+    qs("#reading-sender").textContent = email.sender;
+    qs("#reading-body").textContent = email.body;
+    resetCards();
+    qs("#run-status").hidden = true;
+}
+
+function setMode(mode) {
+    inboxState.mode = mode;
+    ACTIVE_STAGES = STAGE_SETS[mode];
+    document.querySelectorAll(".mode-btn").forEach((btn) => {
+        btn.classList.toggle("active", btn.dataset.mode === mode);
+    });
+    renderStepperGrid(qs("#workflow-grid"), ACTIVE_STAGES);
+    resetCards();
+}
+
+function wireModeToggle() {
+    document.querySelectorAll(".mode-btn").forEach((btn) => {
+        btn.addEventListener("click", () => setMode(btn.dataset.mode));
+    });
+}
+
+function wireComposeModal() {
+    const modal = qs("#compose-modal");
+    const openBtn = qs("#compose-btn");
+    const closeBtn = qs("#compose-close");
+    const form = qs("#compose-form");
+    if (!modal || !openBtn) return;
+
+    openBtn.addEventListener("click", () => {
+        modal.hidden = false;
+    });
+    closeBtn.addEventListener("click", () => {
+        modal.hidden = true;
+    });
+    form.addEventListener("submit", (event) => {
+        event.preventDefault();
+        const email = {
+            id: `custom-${Date.now()}`,
+            sender: form.sender.value,
+            subject: form.subject.value,
+            body: form.body.value,
+        };
+        inboxState.emails.unshift(email);
+        modal.hidden = true;
+        form.reset();
+        renderInboxList();
+        selectEmail(email.id);
+    });
+}
+
+function wireRunButton() {
+    const runBtn = qs("#run-btn");
+    if (!runBtn) return;
+    runBtn.addEventListener("click", async () => {
+        if (!inboxState.selected) return;
+        resetCards();
+        const statusBanner = qs("#run-status");
+        statusBanner.hidden = false;
+        setRunStatus("processing");
+        try {
+            const result = await postJSON("/api/emails/analyze", {
+                sender: inboxState.selected.sender,
+                subject: inboxState.selected.subject,
+                body: inboxState.selected.body,
+                mode: inboxState.mode,
+            });
+            startPolling(result.workflow_id);
+        } catch (error) {
+            setRunStatus("error", { approval_reason: error.message });
+        }
+    });
+}
+
+async function initInbox() {
+    setMode("agentic");
+    wireModeToggle();
+    wireComposeModal();
+    wireRunButton();
+    wireApprovalButtons();
+
+    try {
+        const response = await fetch("/static/seed_inbox.json");
+        inboxState.emails = await response.json();
+    } catch (error) {
+        inboxState.emails = [];
     }
+    renderInboxList();
 }
 
 window.addEventListener("DOMContentLoaded", () => {
     const page = document.body.dataset.page;
-    if (page === "dashboard") initDashboard();
     if (page === "history") initHistory();
     if (page === "workflow") initWorkflowPage();
-    if (page === "architecture") initArchitecture();
+    if (page === "inbox") initInbox();
 });

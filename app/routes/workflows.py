@@ -22,6 +22,7 @@ def list_workflows() -> list[WorkflowSummary]:
                 subject=wf.subject,
                 category=wf.category,
                 status=wf.status,
+                mode=wf.mode,
                 requires_human_approval=wf.requires_human_approval,
                 updated_at=wf.updated_at,
             )
@@ -62,6 +63,7 @@ def get_workflow(workflow_id: str) -> WorkflowDetail:
             category=record.category,
             selected_specialist=record.selected_specialist,
             status=record.status,
+            mode=record.mode,
             requires_human_approval=record.requires_human_approval,
             approval_reason=record.approval_reason,
             human_decision=record.human_decision,
